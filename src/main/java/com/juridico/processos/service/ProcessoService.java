@@ -114,8 +114,7 @@ public class ProcessoService {
 		try {
 			datajudImportService.importarProcessoCompleto(endpoint, numeroProcesso);
 		} catch (Exception e) {
-			// aqui você pode logar o erro, mas não impede o salvamento do processo
-			// ex: log.warn("Falha ao importar andamentos", e);
+			// log.warn("Falha ao importar andamentos", e);
 		}
 	}
 

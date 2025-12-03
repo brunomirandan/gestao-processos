@@ -1,20 +1,12 @@
 package com.juridico.processos.controller;
 
-import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +24,7 @@ import com.juridico.processos.model.Processo;
 import com.juridico.processos.repository.ProcessoRepository;
 import com.juridico.processos.repository.dto.TribunalQuantidadeDTO;
 import com.juridico.processos.service.DatajudImportService;
+import com.juridico.processos.service.ImportarExcelProcessosService;
 import com.juridico.processos.service.ProcessoService;
 
 import jakarta.validation.Valid;
@@ -49,6 +42,9 @@ public class ProcessoController {
 
 	@Autowired
 	private DatajudImportService datajudImportService;
+
+	@Autowired
+	private ImportarExcelProcessosService importarExcelProcessosService;
 
 	public ProcessoController(ProcessoRepository repo, ProcessoService service) {
 		this.repo = repo;
@@ -96,44 +92,20 @@ public class ProcessoController {
 	}
 
 	@PostMapping("/importar")
-	public ResponseEntity<String> importarExcel(@RequestParam("file") MultipartFile file) {
-		try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
+	public ResponseEntity<?> importarProcessos(@RequestParam("file") MultipartFile file) {
+		List<String> erros = importarExcelProcessosService.importarExcel(file);
 
-			Sheet sheet = workbook.getSheetAt(0);
-			List<Processo> processos = new ArrayList<>();
-
-			// Supondo que a primeira linha √© o cabe√ßalho
-			for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-				Row row = sheet.getRow(i);
-				if (row == null)
-					continue;
-
-				Processo p = new Processo();
-				p.setId((long) getNumeric(row, 0));
-				p.setNumeroProcesso(getString(row, 1));
-				p.setTribunal(getString(row, 2));
-				p.setGrau(getString(row, 3));
-				// p.setNivelSigilo((int) getNumeric(row, 4));
-				processos.add(p);
-			}
-
-			repo.saveAll(processos);
-			return ResponseEntity.ok("Importa√ß√£o conclu√≠da: " + processos.size() + " processos.");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro ao importar arquivo: " + e.getMessage());
+		if (erros.isEmpty()) {
+			return ResponseEntity.ok("Todos os processos foram importados com sucesso.");
 		}
-	}
 
-	private String getString(Row row, int cellIndex) {
-		Cell cell = row.getCell(cellIndex);
-		return (cell == null) ? "" : cell.toString().trim();
-	}
+		StringBuilder sb = new StringBuilder();
+		sb.append("ImportaÁ„o finalizada.\n\n");
 
-	private double getNumeric(Row row, int cellIndex) {
-		Cell cell = row.getCell(cellIndex);
-		return (cell == null) ? 0 : cell.getNumericCellValue();
+		sb.append("Alguns processos n„o foram importados:\n");
+		erros.forEach(e -> sb.append(" - ").append(e).append("\n"));
+
+		return ResponseEntity.badRequest().body(sb.toString());
 	}
 
 	@PostMapping("/{id}/importar-andamentos")

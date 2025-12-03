@@ -22,6 +22,31 @@ function formatarCpfCnpj(valor) {
   }
 }
 
+// formata Instant/timestamp/ISO como dd/MM/yyyy HH:mm:ss
+function formatarDataHora(value) {
+  if (!value) return "";
+
+  let date;
+  const num = Number(value);
+  if (!Number.isNaN(num)) {
+    // se for número, assumo segundos (Instant serializado como epochSecond)
+    date = new Date(num * 1000);
+  } else {
+    date = new Date(value);
+  }
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+}
+
 export default function ProcessoForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,7 +66,10 @@ export default function ProcessoForm() {
     juizado: "",
     autores: [],
     reus: [],
+    movimentos: [],
   });
+
+  const [activeTab, setActiveTab] = useState("dados"); // 'dados' | 'movimentos'
 
   // carrega partes e juizados na inicialização
   useEffect(() => {
@@ -90,6 +118,7 @@ export default function ProcessoForm() {
         juizado: data.juizado || "",
         autores: data.autores || [],
         reus: data.reus || [],
+        movimentos: data.movimentos || [],
       });
     } catch (e) {
       console.error("Erro ao carregar processo", e);
@@ -242,12 +271,21 @@ export default function ProcessoForm() {
     try {
       const resp = await api.post(`/processos/${id}/importar-andamentos`);
       setMensagemImportacao(resp.data || "Importação concluída.");
+      // recarrega movimentos após a importação
+      carregarProcesso();
     } catch (err) {
       setMensagemImportacao(
         "Erro ao importar: " + (err.response?.data || err.message)
       );
     }
   };
+
+  // movimentos ordenados desc por dataHora
+  const movimentosOrdenados = [...(processo.movimentos || [])].sort((a, b) => {
+    const da = new Date(Number(a.dataHora || a.data || 0) * 1000);
+    const db = new Date(Number(b.dataHora || b.data || 0) * 1000);
+    return db - da;
+  });
 
   return (
     <div className="container mt-4">
@@ -271,159 +309,226 @@ export default function ProcessoForm() {
         </div>
       )}
 
-      <form onSubmit={salvar} className="mt-3">
-        {/* Número do processo */}
-        <div className="mb-3">
-          <label className="form-label">Número do Processo</label>
-          <input
-            type="text"
-            className="form-control"
-            value={processo.numeroProcesso}
-            onChange={(e) =>
-              setProcesso({ ...processo, numeroProcesso: e.target.value })
-            }
-            required
-          />
-        </div>
+      {/* Abas só fazem sentido quando já existe processo */}
+      {id && (
+        <ul className="nav nav-tabs mb-3">
+          <li className="nav-item">
+            <button
+              type="button"
+              className={
+                "nav-link " + (activeTab === "dados" ? "active" : "")
+              }
+              onClick={() => setActiveTab("dados")}
+            >
+              Dados do Processo
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={
+                "nav-link " + (activeTab === "movimentos" ? "active" : "")
+              }
+              onClick={() => setActiveTab("movimentos")}
+            >
+              Movimentações
+            </button>
+          </li>
+        </ul>
+      )}
 
-        {/* Juizado (enum DatajudEndpoint) */}
-        <div className="mb-3">
-          <label className="form-label">Juizado</label>
-          <select
-            className="form-select"
-            value={processo.juizado}
-            onChange={(e) =>
-              setProcesso({ ...processo, juizado: e.target.value })
-            }
-            required
-          >
-            <option value="">Selecione...</option>
-            {juizados.map((j) => (
-              <option key={j.nome || j.name} value={j.nome || j.name}>
-                {j.descricao || j.label || j.nome || j.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Aba Dados (ou tela de novo processo, que não tem abas) */}
+      {activeTab === "dados" || !id ? (
+        <form onSubmit={salvar} className="mt-3">
+          {/* Número do processo */}
+          <div className="mb-3">
+            <label className="form-label">Número do Processo</label>
+            <input
+              type="text"
+              className="form-control"
+              value={processo.numeroProcesso}
+              onChange={(e) =>
+                setProcesso({ ...processo, numeroProcesso: e.target.value })
+              }
+              required
+            />
+          </div>
 
-        {/* Autores */}
-        <div className="mb-3">
-          <label className="form-label">Autores (Partes)</label>
-          <div className="d-flex gap-2 mb-2">
+          {/* Juizado (enum DatajudEndpoint) */}
+          <div className="mb-3">
+            <label className="form-label">Juizado</label>
             <select
               className="form-select"
-              value={autorId}
-              onChange={(e) => setAutorId(e.target.value)}
+              value={processo.juizado}
+              onChange={(e) =>
+                setProcesso({ ...processo, juizado: e.target.value })
+              }
+              required
             >
-              <option value="">Selecione uma parte...</option>
-              {partes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome} ({formatarCpfCnpj(p.identificacao)})
+              <option value="">Selecione...</option>
+              {juizados.map((j) => (
+                <option key={j.nome || j.name} value={j.nome || j.name}>
+                  {j.descricao || j.label || j.nome || j.name}
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              className="btn btn-outline-primary"
-              onClick={adicionarAutor}
-            >
-              Adicionar Autor
-            </button>
           </div>
 
-          <ul className="list-group">
-            {processo.autores && processo.autores.length > 0 ? (
-              processo.autores.map((a) => (
-                <li
-                  key={a.id}
-                  className="list-group-item d-flex justify-content-between align-items-center"
-                >
-                  <span>
-                    {a.nome} ({formatarCpfCnpj(a.identificacao)})
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => removerAutor(a.id)}
-                  >
-                    Remover
-                  </button>
-                </li>
-              ))
-            ) : (
-              <li className="list-group-item text-muted">
-                Nenhum autor selecionado.
-              </li>
-            )}
-          </ul>
-        </div>
+          {/* Autores */}
+          <div className="mb-3">
+            <label className="form-label">Autores (Partes)</label>
+            <div className="d-flex gap-2 mb-2">
+              <select
+                className="form-select"
+                value={autorId}
+                onChange={(e) => setAutorId(e.target.value)}
+              >
+                <option value="">Selecione uma parte...</option>
+                {partes.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome} ({formatarCpfCnpj(p.identificacao)})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={adicionarAutor}
+              >
+                Adicionar Autor
+              </button>
+            </div>
 
-        {/* Réus */}
-        <div className="mb-3">
-          <label className="form-label">Réus (Partes)</label>
-          <div className="d-flex gap-2 mb-2">
-            <select
-              className="form-select"
-              value={reuId}
-              onChange={(e) => setReuId(e.target.value)}
-            >
-              <option value="">Selecione uma parte...</option>
-              {partes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome} ({formatarCpfCnpj(p.identificacao)})
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="btn btn-outline-primary"
-              onClick={adicionarReu}
-            >
-              Adicionar Réu
-            </button>
+            <ul className="list-group">
+              {processo.autores && processo.autores.length > 0 ? (
+                processo.autores.map((a) => (
+                  <li
+                    key={a.id}
+                    className="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    <span>
+                      {a.nome} ({formatarCpfCnpj(a.identificacao)})
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => removerAutor(a.id)}
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="list-group-item text-muted">
+                  Nenhum autor selecionado.
+                </li>
+              )}
+            </ul>
           </div>
 
-          <ul className="list-group">
-            {processo.reus && processo.reus.length > 0 ? (
-              processo.reus.map((r) => (
-                <li
-                  key={r.id}
-                  className="list-group-item d-flex justify-content-between align-items-center"
-                >
-                  <span>
-                    {r.nome} ({formatarCpfCnpj(r.identificacao)})
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => removerReu(r.id)}
+          {/* Réus */}
+          <div className="mb-3">
+            <label className="form-label">Réus (Partes)</label>
+            <div className="d-flex gap-2 mb-2">
+              <select
+                className="form-select"
+                value={reuId}
+                onChange={(e) => setReuId(e.target.value)}
+              >
+                <option value="">Selecione uma parte...</option>
+                {partes.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome} ({formatarCpfCnpj(p.identificacao)})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={adicionarReu}
+              >
+                Adicionar Réu
+              </button>
+            </div>
+
+            <ul className="list-group">
+              {processo.reus && processo.reus.length > 0 ? (
+                processo.reus.map((r) => (
+                  <li
+                    key={r.id}
+                    className="list-group-item d-flex justify-content-between align-items-center"
                   >
-                    Remover
-                  </button>
+                    <span>
+                      {r.nome} ({formatarCpfCnpj(r.identificacao)})
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => removerReu(r.id)}
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="list-group-item text-muted">
+                  Nenhum réu selecionado.
                 </li>
-              ))
-            ) : (
-              <li className="list-group-item text-muted">
-                Nenhum réu selecionado.
-              </li>
-            )}
-          </ul>
-        </div>
+              )}
+            </ul>
+          </div>
 
-        <button type="submit" className="btn btn-success me-2">
-          Salvar
-        </button>
-
-        {id && (
-          <button
-            type="button"
-            className="btn btn-warning"
-            onClick={importarAndamentos}
-          >
-            Importar Andamentos (manual)
+          <button type="submit" className="btn btn-success me-2">
+            Salvar
           </button>
-        )}
-      </form>
+
+          {id && (
+            <button
+              type="button"
+              className="btn btn-warning"
+              onClick={importarAndamentos}
+            >
+              Importar Andamentos
+            </button>
+          )}
+        </form>
+      ) : null}
+
+      {/* Aba Movimentações (somente em modo edição) */}
+      {id && activeTab === "movimentos" && (
+        <div className="mt-3">
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <h5>Movimentações (mais recentes primeiro)</h5>
+            <button
+              type="button"
+              className="btn btn-warning btn-sm"
+              onClick={importarAndamentos}
+            >
+              Importar Andamentos
+            </button>
+          </div>
+
+          <ul className="list-group">
+            {movimentosOrdenados && movimentosOrdenados.length > 0 ? (
+              movimentosOrdenados.map((m, idx) => (
+                <li key={m.id || idx} className="list-group-item">
+                  <div>
+                    <strong>{formatarDataHora(m.dataHora || m.data)}</strong>
+                  </div>
+                  <div>{m.nome || m.descricao || "—"}</div>
+                  {m.codigo && (
+                    <div className="text-muted">Código: {m.codigo}</div>
+                  )}
+                </li>
+              ))
+            ) : (
+              <li className="list-group-item text-muted">
+                Nenhuma movimentação encontrada para este processo.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

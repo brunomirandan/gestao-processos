@@ -20,7 +20,6 @@ import com.juridico.processos.model.Movimento;
 import com.juridico.processos.model.OrgaoJulgador;
 import com.juridico.processos.model.Processo;
 import com.juridico.processos.model.Sistema;
-import com.juridico.processos.repository.MovimentoRepository;
 import com.juridico.processos.repository.ProcessoRepository;
 
 import okhttp3.MediaType;
@@ -33,14 +32,12 @@ import okhttp3.Response;
 public class DatajudImportService {
 
 	private final ProcessoRepository processoRepository;
-	private final MovimentoRepository movimentoRepository;
 
 	@Value("${datajud.api.key}")
 	private String apiKey;
 
-	public DatajudImportService(ProcessoRepository processoRepository, MovimentoRepository movimentoRepository) {
+	public DatajudImportService(ProcessoRepository processoRepository) {
 		this.processoRepository = processoRepository;
-		this.movimentoRepository = movimentoRepository;
 	}
 
 	@Transactional

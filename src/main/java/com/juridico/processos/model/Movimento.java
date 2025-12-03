@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,6 +31,7 @@ public class Movimento {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "processo_id")
+	@JsonBackReference
 	private Processo processo;
 
 	@OneToMany(mappedBy = "movimento", cascade = CascadeType.ALL, orphanRemoval = true)

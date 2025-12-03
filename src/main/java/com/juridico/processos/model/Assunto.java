@@ -1,5 +1,7 @@
 package com.juridico.processos.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -22,6 +24,7 @@ public class Assunto {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "processo_id")
+	@JsonBackReference
 	private Processo processo;
 
 	public Long getId() {

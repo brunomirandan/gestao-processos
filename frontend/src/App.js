@@ -11,6 +11,8 @@ import Home from "./components/Home";
 import ParteList from "./components/ParteList";
 import ParteForm from "./components/ParteForm";
 import Dashboard from "./components/Dashboard";
+import ProcessoConsulta from "./components/ProcessoConsulta";
+
 
 
 
@@ -126,6 +128,15 @@ export default function App() {
 					element={
 						<ProtectedRoute>
 							<Dashboard />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path="/processos/:id/consulta"
+					element={
+						<ProtectedRoute>
+							<ProcessoConsulta />
 						</ProtectedRoute>
 					}
 				/>

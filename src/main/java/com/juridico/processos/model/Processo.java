@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.juridico.processos.enums.DatajudEndpoint;
 
 import jakarta.persistence.CascadeType;
@@ -44,9 +45,11 @@ public class Processo {
 	private OrgaoJulgador orgaoJulgador;
 
 	@OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
 	private List<Movimento> movimentos = new ArrayList<Movimento>();
 
 	@OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
 	private List<Assunto> assuntos = new ArrayList<Assunto>();
 
 	@Enumerated(EnumType.STRING)
