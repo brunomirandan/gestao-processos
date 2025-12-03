@@ -102,7 +102,7 @@ export default function Home() {
 			{/* Dashboard - pode ser só para ADMIN se quiser */}
 			{hasRole("ROLE_ADMIN") && (
 				<section className="mt-5">
-					<h4>Módulo de Relatório</h4>
+					<h4>Módulo de Relatórios</h4>
 					<div className="col-md-4 mb-3">
 						<div className="card h-100">
 							<div className="card-body d-flex flex-column">
