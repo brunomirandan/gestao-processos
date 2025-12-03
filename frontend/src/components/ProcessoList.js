@@ -2,6 +2,21 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
+function formatDateTime(dateString) {
+  if (!dateString) return "";
+  
+  const date = new Date(Number(dateString)*1000);
+
+  return date.toLocaleDateString("pt-BR", {
+	day: "2-digit",
+	month: "2-digit",
+	year: "numeric",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit"
+  });
+}
+
 export default function ProcessoList() {
   const [processos, setProcessos] = useState([]);
   const navigate = useNavigate();
@@ -13,12 +28,11 @@ export default function ProcessoList() {
   const carregar = async () => {
     const resp = await api.get("/processos");
 
-   const lista =
-      Array.isArray(resp.data)
-        ? resp.data
-        : Array.isArray(resp.data.content)
-          ? resp.data.content
-          : [];
+    const lista = Array.isArray(resp.data)
+      ? resp.data
+      : Array.isArray(resp.data.content)
+      ? resp.data.content
+      : [];
 
     setProcessos(lista);
   };
@@ -31,13 +45,12 @@ export default function ProcessoList() {
 
   return (
     <div className="container mt-4">
-
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Lista de Processos</h2>
 
         <button
           type="button"
-          className="btn btn-success"
+          className="btn btn.success btn-success"
           onClick={() => navigate("/novo")}
         >
           Novo Processo
@@ -50,6 +63,8 @@ export default function ProcessoList() {
             <th>Número</th>
             <th>Tribunal</th>
             <th>Grau</th>
+            <th>Data ajuizamento</th>
+            <th>Data última alteração</th>
             <th style={{ width: "180px" }}>Ações</th>
           </tr>
         </thead>
@@ -59,6 +74,8 @@ export default function ProcessoList() {
               <td>{p.numeroProcesso}</td>
               <td>{p.tribunal}</td>
               <td>{p.grau}</td>
+              <td>{formatDateTime(p.dataAjuizamento)}</td>
+              <td>{formatDateTime(p.dataHoraUltimaAtualizacao)}</td>
               <td>
                 <button
                   className="btn btn-warning btn-sm me-2"
@@ -67,7 +84,7 @@ export default function ProcessoList() {
                   Editar
                 </button>
                 <button
-                  className="btn btn-danger btn-sm"
+                  className="btn btn-danger btn-sm btn-sm"
                   onClick={() => excluir(p.id)}
                 >
                   Excluir
@@ -78,7 +95,7 @@ export default function ProcessoList() {
 
           {processos.length === 0 && (
             <tr>
-              <td colSpan="4" className="text-center">
+              <td colSpan="5" className="text-center">
                 Nenhum processo encontrado.
               </td>
             </tr>

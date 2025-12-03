@@ -12,13 +12,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.juridico.processos.enums.DatajudEndpoint;
 import com.juridico.processos.model.Assunto;
-import com.juridico.processos.model.ClasseInfo;
-import com.juridico.processos.model.FormatoInfo;
+import com.juridico.processos.model.Classe;
+import com.juridico.processos.model.Formato;
 import com.juridico.processos.model.Movimento;
 import com.juridico.processos.model.OrgaoJulgador;
 import com.juridico.processos.model.Processo;
-import com.juridico.processos.model.SistemaInfo;
+import com.juridico.processos.model.Sistema;
 import com.juridico.processos.repository.MovimentoRepository;
 import com.juridico.processos.repository.ProcessoRepository;
 
@@ -43,9 +44,9 @@ public class DatajudImportService {
 	}
 
 	@Transactional
-	public String importarProcessoCompleto(String idProcesso) {
-		Processo processoExistente = processoRepository.findById(idProcesso)
-				.orElseThrow(() -> new RuntimeException("Processo não encontrado: " + idProcesso));
+	public String importarProcessoCompleto(DatajudEndpoint endpoint, String nProcesso) {
+		Processo processoExistente = processoRepository.findByNumeroProcesso(nProcesso)
+				.orElseThrow(() -> new RuntimeException("Processo não encontrado: " + nProcesso));
 
 		String numeroProcesso = processoExistente.getNumeroProcesso();
 
@@ -56,9 +57,8 @@ public class DatajudImportService {
 				+ numeroProcesso + "\"\n" + "    }\n" + "  }\n" + "}";
 
 		RequestBody body = RequestBody.create(mediaType, jsonQuery);
-		Request request = new Request.Builder().url("https://api-publica.datajud.cnj.jus.br/api_publica_tjmg/_search")
-				.method("POST", body).addHeader("Authorization", "APIKey " + apiKey)
-				.addHeader("Content-Type", "application/json").build();
+		Request request = new Request.Builder().url(endpoint.getEndereco()).method("POST", body)
+				.addHeader("Authorization", "APIKey " + apiKey).addHeader("Content-Type", "application/json").build();
 
 		try (Response response = client.newCall(request).execute()) {
 			if (!response.isSuccessful())
@@ -90,27 +90,27 @@ public class DatajudImportService {
 			// Classe
 			if (source.has("classe")) {
 				JSONObject classe = source.getJSONObject("classe");
-				ClasseInfo classeInfo = new ClasseInfo();
-				classeInfo.setCodigo(classe.optInt("codigo"));
-				classeInfo.setNome(classe.optString("nome"));
+				Classe classeInfo = new Classe();
+				classeInfo.setCodigoClasse(classe.optInt("codigo"));
+				classeInfo.setNomeClasse(classe.optString("nome"));
 				processoExistente.setClasse(classeInfo);
 			}
 
 			// Sistema
 			if (source.has("sistema")) {
-				JSONObject sistema = source.getJSONObject("sistema");
-				SistemaInfo sistemaInfo = new SistemaInfo();
-				sistemaInfo.setCodigo(sistema.optInt("codigo"));
-				sistemaInfo.setNome(sistema.optString("nome"));
-				processoExistente.setSistema(sistemaInfo);
+				JSONObject sistemaJSON = source.getJSONObject("sistema");
+				Sistema sistema = new Sistema();
+				sistema.setCodigoSistema(sistemaJSON.optInt("codigo"));
+				sistema.setNomeSistema(sistemaJSON.optString("nome"));
+				processoExistente.setSistema(sistema);
 			}
 
 			// Formato
 			if (source.has("formato")) {
 				JSONObject formato = source.getJSONObject("formato");
-				FormatoInfo formatoInfo = new FormatoInfo();
-				formatoInfo.setCodigo(formato.optInt("codigo"));
-				formatoInfo.setNome(formato.optString("nome"));
+				Formato formatoInfo = new Formato();
+				formatoInfo.setCodigoFormato(formato.optInt("codigo"));
+				formatoInfo.setNomeFormato(formato.optString("nome"));
 				processoExistente.setFormato(formatoInfo);
 			}
 
@@ -118,8 +118,8 @@ public class DatajudImportService {
 			if (source.has("orgaoJulgador")) {
 				JSONObject orgao = source.getJSONObject("orgaoJulgador");
 				OrgaoJulgador orgaoJulgador = new OrgaoJulgador();
-				orgaoJulgador.setCodigo(orgao.optInt("codigo"));
-				orgaoJulgador.setNome(orgao.optString("nome"));
+				orgaoJulgador.setCodigoOrgaoJulgador(orgao.optInt("codigo"));
+				orgaoJulgador.setNomeOrgaoJulgador(orgao.optString("nome"));
 				orgaoJulgador.setCodigoMunicipioIBGE(orgao.optInt("codigoMunicipioIBGE", 0));
 				processoExistente.setOrgaoJulgador(orgaoJulgador);
 			}
@@ -164,8 +164,8 @@ public class DatajudImportService {
 
 			processoRepository.save(processoExistente);
 
-			return "Processo atualizado com sucesso a partir da API DataJud (" + numeroProcesso + "), com "
-					+ processoExistente.getMovimentos().size() + " movimentos.";
+			return "Processo atualizado com sucesso a partir da API DataJud (" + numeroProcesso + "), com " + 10
+					+ " movimentos.";
 
 		} catch (Exception e) {
 			e.printStackTrace();

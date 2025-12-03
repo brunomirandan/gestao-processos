@@ -1,40 +1,36 @@
 package com.juridico.processos.model;
 
 import jakarta.persistence.Embeddable;
-import lombok.Getter;
-import lombok.Setter;
 
 @Embeddable
-@Getter
-@Setter
 public class OrgaoJulgador {
 
 	private Integer codigoMunicipioIBGE;
-	private Integer codigo;
-	private String nome;
+	private Integer codigoOrgaoJulgador;
+	private String nomeOrgaoJulgador;
 
 	public Integer getCodigoMunicipioIBGE() {
 		return codigoMunicipioIBGE;
+	}
+
+	public Integer getCodigoOrgaoJulgador() {
+		return codigoOrgaoJulgador;
+	}
+
+	public String getNomeOrgaoJulgador() {
+		return nomeOrgaoJulgador;
 	}
 
 	public void setCodigoMunicipioIBGE(Integer codigoMunicipioIBGE) {
 		this.codigoMunicipioIBGE = codigoMunicipioIBGE;
 	}
 
-	public Integer getCodigo() {
-		return codigo;
+	public void setCodigoOrgaoJulgador(Integer codigoOrgaoJulgador) {
+		this.codigoOrgaoJulgador = codigoOrgaoJulgador;
 	}
 
-	public void setCodigo(Integer codigo) {
-		this.codigo = codigo;
-	}
-
-	public String getNome() {
-		return nome;
-	}
-
-	public void setNome(String nome) {
-		this.nome = nome;
+	public void setNomeOrgaoJulgador(String nomeOrgaoJulgador) {
+		this.nomeOrgaoJulgador = nomeOrgaoJulgador;
 	}
 
 }

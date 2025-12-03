@@ -13,16 +13,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.Table;
 
 @Entity
-@Getter
-@Setter
+@Table(name = "movimento")
 public class Movimento {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
 	private Integer codigo;
@@ -40,48 +38,50 @@ public class Movimento {
 		return id;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
-	}
-
 	public Integer getCodigo() {
 		return codigo;
-	}
-
-	public void setCodigo(Integer codigo) {
-		this.codigo = codigo;
 	}
 
 	public String getNome() {
 		return nome;
 	}
 
-	public void setNome(String nome) {
-		this.nome = nome;
-	}
-
 	public Instant getDataHora() {
 		return dataHora;
-	}
-
-	public void setDataHora(Instant dataHora) {
-		this.dataHora = dataHora;
 	}
 
 	public Processo getProcesso() {
 		return processo;
 	}
 
-	public void setProcesso(Processo processo) {
-		this.processo = processo;
-	}
-
 	public List<ComplementoTabelado> getComplementosTabelados() {
 		return complementosTabelados;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setCodigo(Integer codigo) {
+		this.codigo = codigo;
+	}
+
+	public void setNome(String nome) {
+		this.nome = nome;
+	}
+
+	public void setDataHora(Instant dataHora) {
+		this.dataHora = dataHora;
+	}
+
+	public void setProcesso(Processo processo) {
+		this.processo = processo;
 	}
 
 	public void setComplementosTabelados(List<ComplementoTabelado> complementosTabelados) {
 		this.complementosTabelados = complementosTabelados;
 	}
+
+
 
 }

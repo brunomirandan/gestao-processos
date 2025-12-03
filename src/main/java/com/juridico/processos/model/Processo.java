@@ -2,175 +2,202 @@ package com.juridico.processos.model;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
+import com.juridico.processos.enums.DatajudEndpoint;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "processo")
 public class Processo {
 
 	@Id
-	private String id; // ex: TRF1_436_JE_16403_00008323520184013202
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
 
-	@NotBlank
 	private String numeroProcesso;
-
-	private String tribunal; // TRF1
-	private String grau; // JE
-
-	@Embedded
-	private ClasseInfo classe;
-
-	@Embedded
-	@AttributeOverrides({ @AttributeOverride(name = "codigo", column = @Column(name = "sistema_codigo")),
-			@AttributeOverride(name = "nome", column = @Column(name = "sistema_nome")) })
-	private SistemaInfo sistema;
-
-	@Embedded
-	@AttributeOverrides({ @AttributeOverride(name = "codigo", column = @Column(name = "formato_codigo")),
-			@AttributeOverride(name = "nome", column = @Column(name = "formato_nome")) })
-	private FormatoInfo formato;
-
-	@Embedded
-	@AttributeOverrides({
-			@AttributeOverride(name = "codigoMunicipioIBGE", column = @Column(name = "orgao_codigo_municipio_ibge")),
-			@AttributeOverride(name = "codigo", column = @Column(name = "orgao_codigo")),
-			@AttributeOverride(name = "nome", column = @Column(name = "orgao_nome")) })
-	private OrgaoJulgador orgaoJulgador;
-
+	private String tribunal;
+	private Instant dataHoraUltimaAtualizacao;
+	private String grau;
+	private Instant dataAjuizamento;
+	private String idProcesso;
 	private Integer nivelSigilo;
 
-	private Instant dataHoraUltimaAtualizacao;
-
-	private Instant dataAjuizamento;
-
-	@Column(name = "timestamp_index")
-	private Instant timestampIndex; // mapeia @timestamp do JSON
+	private Classe classe;
+	private Sistema sistema;
+	private Formato formato;
+	private OrgaoJulgador orgaoJulgador;
 
 	@OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Movimento> movimentos = new ArrayList<>();
+	private List<Movimento> movimentos = new ArrayList<Movimento>();
 
 	@OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Assunto> assuntos = new ArrayList<>();
+	private List<Assunto> assuntos = new ArrayList<Assunto>();
 
-	public String getId() {
-		return id;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "juizado", nullable = false, length = 100)
+	private DatajudEndpoint juizado;
+
+	@ManyToMany
+	@JoinTable(name = "processo_autor", joinColumns = @JoinColumn(name = "processo_id"), inverseJoinColumns = @JoinColumn(name = "parte_id"))
+	private Set<Parte> autores = new LinkedHashSet<>();
+
+	@ManyToMany
+	@JoinTable(name = "processo_reu", joinColumns = @JoinColumn(name = "processo_id"), inverseJoinColumns = @JoinColumn(name = "parte_id"))
+	private Set<Parte> reus = new LinkedHashSet<>();
+
+	public Processo() {
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public Long getId() {
+		return id;
 	}
 
 	public String getNumeroProcesso() {
 		return numeroProcesso;
 	}
 
-	public void setNumeroProcesso(String numeroProcesso) {
-		this.numeroProcesso = numeroProcesso;
-	}
-
 	public String getTribunal() {
 		return tribunal;
-	}
-
-	public void setTribunal(String tribunal) {
-		this.tribunal = tribunal;
-	}
-
-	public String getGrau() {
-		return grau;
-	}
-
-	public void setGrau(String grau) {
-		this.grau = grau;
-	}
-
-	public ClasseInfo getClasse() {
-		return classe;
-	}
-
-	public void setClasse(ClasseInfo classe) {
-		this.classe = classe;
-	}
-
-	public SistemaInfo getSistema() {
-		return sistema;
-	}
-
-	public void setSistema(SistemaInfo sistema) {
-		this.sistema = sistema;
-	}
-
-	public FormatoInfo getFormato() {
-		return formato;
-	}
-
-	public void setFormato(FormatoInfo formato) {
-		this.formato = formato;
-	}
-
-	public OrgaoJulgador getOrgaoJulgador() {
-		return orgaoJulgador;
-	}
-
-	public void setOrgaoJulgador(OrgaoJulgador orgaoJulgador) {
-		this.orgaoJulgador = orgaoJulgador;
-	}
-
-	public Integer getNivelSigilo() {
-		return nivelSigilo;
-	}
-
-	public void setNivelSigilo(Integer nivelSigilo) {
-		this.nivelSigilo = nivelSigilo;
 	}
 
 	public Instant getDataHoraUltimaAtualizacao() {
 		return dataHoraUltimaAtualizacao;
 	}
 
-	public void setDataHoraUltimaAtualizacao(Instant dataHoraUltimaAtualizacao) {
-		this.dataHoraUltimaAtualizacao = dataHoraUltimaAtualizacao;
+	public String getGrau() {
+		return grau;
 	}
 
 	public Instant getDataAjuizamento() {
 		return dataAjuizamento;
 	}
 
-	public void setDataAjuizamento(Instant dataAjuizamento) {
-		this.dataAjuizamento = dataAjuizamento;
+	public String getIdProcesso() {
+		return idProcesso;
 	}
 
-	public Instant getTimestampIndex() {
-		return timestampIndex;
+	public Integer getNivelSigilo() {
+		return nivelSigilo;
 	}
 
-	public void setTimestampIndex(Instant timestampIndex) {
-		this.timestampIndex = timestampIndex;
+	public Classe getClasse() {
+		return classe;
+	}
+
+	public Sistema getSistema() {
+		return sistema;
+	}
+
+	public Formato getFormato() {
+		return formato;
+	}
+
+	public OrgaoJulgador getOrgaoJulgador() {
+		return orgaoJulgador;
 	}
 
 	public List<Movimento> getMovimentos() {
 		return movimentos;
 	}
 
-	public void setMovimentos(List<Movimento> movimentos) {
-		this.movimentos = movimentos;
-	}
-
 	public List<Assunto> getAssuntos() {
 		return assuntos;
 	}
 
+	public DatajudEndpoint getJuizado() {
+		return juizado;
+	}
+
+	public Set<Parte> getAutores() {
+		return autores;
+	}
+
+	public Set<Parte> getReus() {
+		return reus;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setNumeroProcesso(String numeroProcesso) {
+		this.numeroProcesso = numeroProcesso;
+	}
+
+	public void setTribunal(String tribunal) {
+		this.tribunal = tribunal;
+	}
+
+	public void setDataHoraUltimaAtualizacao(Instant dataHoraUltimaAtualizacao) {
+		this.dataHoraUltimaAtualizacao = dataHoraUltimaAtualizacao;
+	}
+
+	public void setGrau(String grau) {
+		this.grau = grau;
+	}
+
+	public void setDataAjuizamento(Instant dataAjuizamento) {
+		this.dataAjuizamento = dataAjuizamento;
+	}
+
+	public void setIdProcesso(String idProcesso) {
+		this.idProcesso = idProcesso;
+	}
+
+	public void setNivelSigilo(Integer nivelSigilo) {
+		this.nivelSigilo = nivelSigilo;
+	}
+
+	public void setClasse(Classe classe) {
+		this.classe = classe;
+	}
+
+	public void setSistema(Sistema sistema) {
+		this.sistema = sistema;
+	}
+
+	public void setFormato(Formato formato) {
+		this.formato = formato;
+	}
+
+	public void setOrgaoJulgador(OrgaoJulgador orgaoJulgador) {
+		this.orgaoJulgador = orgaoJulgador;
+	}
+
+	public void setMovimentos(List<Movimento> movimentos) {
+		this.movimentos = movimentos;
+	}
+
 	public void setAssuntos(List<Assunto> assuntos) {
 		this.assuntos = assuntos;
+	}
+
+	public void setJuizado(DatajudEndpoint juizado) {
+		this.juizado = juizado;
+	}
+
+	public void setAutores(Set<Parte> autores) {
+		this.autores = autores;
+	}
+
+	public void setReus(Set<Parte> reus) {
+		this.reus = reus;
 	}
 
 }

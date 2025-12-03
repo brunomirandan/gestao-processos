@@ -30,12 +30,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.juridico.processos.model.Processo;
 import com.juridico.processos.repository.ProcessoRepository;
+import com.juridico.processos.repository.dto.TribunalQuantidadeDTO;
 import com.juridico.processos.service.DatajudImportService;
 import com.juridico.processos.service.ProcessoService;
 
 import jakarta.validation.Valid;
 
-@CrossOrigin(origins = "http://localhost:3000") // React (CRA) → 3000. Se usar Vite, troque para 5173.
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/processos")
 public class ProcessoController {
@@ -63,30 +64,30 @@ public class ProcessoController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Processo> buscar(@PathVariable String id) {
+	public ResponseEntity<Processo> buscar(@PathVariable Long id) {
 		return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	public ResponseEntity<Processo> criar(@Valid @RequestBody Processo p) {
-		if (repo.existsById(p.getId())) {
-			return ResponseEntity.badRequest().build();
-		}
 		Processo salvo = service.salvar(p);
 		return ResponseEntity.created(URI.create("/api/processos/" + salvo.getId())).body(salvo);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<Processo> atualizar(@PathVariable String id, @Valid @RequestBody Processo p) {
-		if (!repo.existsById(id))
+	public ResponseEntity<Processo> atualizar(@PathVariable Long id, @Valid @RequestBody Processo p) {
+
+		if (!repo.existsById(id)) {
 			return ResponseEntity.notFound().build();
+		}
+
 		p.setId(id);
 		Processo salvo = service.salvar(p);
 		return ResponseEntity.ok(salvo);
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> remover(@PathVariable String id) {
+	public ResponseEntity<Void> remover(@PathVariable Long id) {
 		if (!repo.existsById(id)) {
 			return ResponseEntity.notFound().build();
 		}
@@ -108,11 +109,11 @@ public class ProcessoController {
 					continue;
 
 				Processo p = new Processo();
-				p.setId(getString(row, 0));
+				p.setId((long) getNumeric(row, 0));
 				p.setNumeroProcesso(getString(row, 1));
 				p.setTribunal(getString(row, 2));
 				p.setGrau(getString(row, 3));
-				p.setNivelSigilo((int) getNumeric(row, 4));
+				// p.setNivelSigilo((int) getNumeric(row, 4));
 				processos.add(p);
 			}
 
@@ -136,9 +137,15 @@ public class ProcessoController {
 	}
 
 	@PostMapping("/{id}/importar-andamentos")
-	public ResponseEntity<String> importarAndamentos(@PathVariable String id) {
-		String resultado = datajudImportService.importarProcessoCompleto(id);
+	public ResponseEntity<String> importarAndamentos(@PathVariable Processo processo) {
+		String resultado = datajudImportService.importarProcessoCompleto(processo.getJuizado(),
+				processo.getNumeroProcesso());
 		return ResponseEntity.ok(resultado);
+	}
+
+	@GetMapping("/relatorios/quantidade-por-tribunal")
+	public List<TribunalQuantidadeDTO> relatorioQuantidadePorTribunal() {
+		return service.relatorioProcessosPorTribunal();
 	}
 
 }

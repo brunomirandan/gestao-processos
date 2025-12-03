@@ -7,16 +7,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.Table;
 
 @Entity
-@Getter
-@Setter
+@Table(name = "complementoTabelado")
 public class ComplementoTabelado {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
 	private Integer codigo;
@@ -32,44 +30,44 @@ public class ComplementoTabelado {
 		return id;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
-	}
-
 	public Integer getCodigo() {
 		return codigo;
-	}
-
-	public void setCodigo(Integer codigo) {
-		this.codigo = codigo;
 	}
 
 	public Integer getValor() {
 		return valor;
 	}
 
-	public void setValor(Integer valor) {
-		this.valor = valor;
-	}
-
 	public String getNome() {
 		return nome;
-	}
-
-	public void setNome(String nome) {
-		this.nome = nome;
 	}
 
 	public String getDescricao() {
 		return descricao;
 	}
 
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
-
 	public Movimento getMovimento() {
 		return movimento;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setCodigo(Integer codigo) {
+		this.codigo = codigo;
+	}
+
+	public void setValor(Integer valor) {
+		this.valor = valor;
+	}
+
+	public void setNome(String nome) {
+		this.nome = nome;
+	}
+
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
 	}
 
 	public void setMovimento(Movimento movimento) {

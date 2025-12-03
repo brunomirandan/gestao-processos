@@ -8,6 +8,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UserList from "./components/UserList";
 import UserForm from "./components/UserForm";
 import Home from "./components/Home";
+import ParteList from "./components/ParteList";
+import ParteForm from "./components/ParteForm";
+import Dashboard from "./components/Dashboard";
+
+
 
 export default function App() {
 	return (
@@ -85,6 +90,42 @@ export default function App() {
 					element={
 						<ProtectedRoute>
 							<UserForm />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path="/partes"
+					element={
+						<ProtectedRoute>
+							<ParteList />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path="/partes/novo"
+					element={
+						<ProtectedRoute>
+							<ParteForm />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path="/partes/:id"
+					element={
+						<ProtectedRoute>
+							<ParteForm />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path="/dashboard"
+					element={
+						<ProtectedRoute>
+							<Dashboard />
 						</ProtectedRoute>
 					}
 				/>
